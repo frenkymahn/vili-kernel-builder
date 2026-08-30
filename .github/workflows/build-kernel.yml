@@ -13,7 +13,7 @@ jobs:
       - name: Install Build Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc bison build-essential ccache flex g++-multilib gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev libelf-dev
+          sudo apt-get install -y bc bison build-essential ccache flex g++-multilib gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev libelf-dev unzip wget
 
       - name: Download Clang Compiler & Toolchains
         run: |
@@ -21,9 +21,11 @@ jobs:
           cd $GITHUB_WORKSPACE/tc
           git clone --depth=1 https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 -b main clang
 
-      - name: Clone Kernel Source & Integrate KernelSU
+      - name: Download Kernel Source & Integrate KernelSU
         run: |
-          git clone --depth=1 -b lineage-21 https://github.com/Xiaomi-SM8350/android_kernel_xiaomi_sm8350.git android_kernel
+          wget -O kernel.zip https://github.com/Xiaomi-SM8350/android_kernel_xiaomi_sm8350/archive/refs/heads/lineage-21.zip
+          unzip -q kernel.zip
+          mv android_kernel_xiaomi_sm8350-lineage-21 android_kernel
           cd android_kernel
           curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
 
