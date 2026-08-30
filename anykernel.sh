@@ -4,21 +4,19 @@
 ### AnyKernel setup
 # global properties
 properties() { '
-kernel.string=ExampleKernel by osm0sis @ xda-developers
+DARK kernel by FrenkyMahn
 do.devicecheck=1
 do.modules=0
 do.systemless=1
 do.cleanup=1
-do.cleanuponabort=0
-device.name1=maguro
-device.name2=toro
-device.name3=toroplus
-device.name4=tuna
-device.name5=
-supported.versions=
-supported.patchlevels=
-supported.vendorpatchlevels=
-'; } # end properties
+do.cleanuponabort=1
+device.name1=vili
+device.name2=Xiaomi 11T Pro
+
+# Block Device Routing
+# For SM8350 (Snapdragon 888), the boot partition is normally allocated here:
+block=/dev/block/bootdevice/by-name/boot;
+is_slot_device=1; # Xiaomi 11T Pro is an A/B slot device
 
 
 ### AnyKernel install
