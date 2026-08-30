@@ -23,6 +23,7 @@ jobs:
 
       - name: Clone Kernel Source & Integrate KernelSU
         run: |
+          git config --global credential.helper store
           git clone --depth=1 https://github.com/Xiaomi-SM8350/android_kernel_xiaomi_sm8350.git android_kernel
           cd android_kernel
           curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
