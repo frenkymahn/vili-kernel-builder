@@ -3,13 +3,6 @@ name: Build Xiaomi 11T Pro Custom Kernel
 on:
   workflow_dispatch:
 
-env:
-  KERNEL_REPO: "Xiaomi-SM8350/android_kernel_xiaomi_sm8350"
-  KERNEL_BRANCH: "lineage-21"
-  KERNEL_DEFCONFIG: "vili_defconfig"
-  ANYKERNEL_REPO: "frenkymahn/vili-kernel-builder"
-  ANYKERNEL_BRANCH: "master"
-
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -30,7 +23,7 @@ jobs:
 
       - name: Clone Kernel Source & Integrate KernelSU
         run: |
-          git clone https://github.com/${{ env.KERNEL_REPO }} -b ${{ env.KERNEL_BRANCH }} android_kernel --depth=1
+          git clone --depth=1 -b lineage-21 https://github.com/Xiaomi-SM8350/android_kernel_xiaomi_sm8350.git android_kernel
           cd android_kernel
           curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
 
@@ -45,9 +38,8 @@ jobs:
           export CROSS_COMPILE_COMPAT=arm-linux-gnueabi-
           export CC=clang
           
-          make O=out ${{ env.KERNEL_DEFCONFIG }}
+          make O=out vili_defconfig
           
-          # ആവശ്യമായ BPF, XATTR, KernelSU കോൺഫിഗറേഷനുകൾ ഇവിടെ ഉറപ്പുവരുത്തുന്നു
           echo "CONFIG_TMPFS_XATTR=y" >> out/.config
           echo "CONFIG_KSU=y" >> out/.config
           echo "CONFIG_BPF=y" >> out/.config
@@ -62,19 +54,9 @@ jobs:
                CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
                LOCALVERSION="-DARK-kernel"
 
-      - name: Verify Kernel Output
-        run: |
-          if [ -f android_kernel/out/arch/arm64/boot/Image ]; then
-              echo "KERNEL_IMAGE=Image" >> $GITHUB_ENV
-          elif [ -f android_kernel/out/arch/arm64/boot/Image.gz ]; then
-              echo "KERNEL_IMAGE=Image.gz" >> $GITHUB_ENV
-          else
-              echo "Build Failed: Kernel output image not found!" && exit 1
-          fi
-
       - name: Clone AnyKernel3 Template
         run: |
-          git clone https://github.com/${{ env.ANYKERNEL_REPO }} -b ${{ env.ANYKERNEL_BRANCH }} AnyKernel3
+          git clone --depth=1 https://github.com/frenkymahn/vili-kernel-builder.git -b master AnyKernel3
 
       - name: Update AnyKernel Info for Builder & Kernel
         run: |
@@ -83,8 +65,21 @@ jobs:
 
       - name: Package Kernel Flashable Zip
         run: |
-          cp android_kernel/out/arch/arm64/boot/${{ env.KERNEL_IMAGE }} AnyKernel3/
-          cd AnyKernel3
+          cd android_kernel
+          
+          cp out/arch/arm64/boot/Image ${{ github.workspace }}/AnyKernel3/
+          
+          if [ -f out/arch/arm64/boot/dtb ]; then
+              cp out/arch/arm64/boot/dtb ${{ github.workspace }}/AnyKernel3/
+          elif [ -f out/arch/arm64/boot/dts/xiaomi/vili.dtb ]; then
+              cp out/arch/arm64/boot/dts/xiaomi/vili.dtb ${{ github.workspace }}/AnyKernel3/dtb
+          fi
+          
+          if [ -f out/arch/arm64/boot/dtbo.img ]; then
+              cp out/arch/arm64/boot/dtbo.img ${{ github.workspace }}/AnyKernel3/
+          fi
+          
+          cd ${{ github.workspace }}/AnyKernel3
           zip -r9 ../DARK-kernel-Vili.zip * -x .git* README.md
 
       - name: Upload Flashable Zip Package
