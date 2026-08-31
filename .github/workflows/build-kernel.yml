@@ -25,6 +25,7 @@ jobs:
         run: |
           mkdir -p $GITHUB_WORKSPACE/android_kernel
           cd $GITHUB_WORKSPACE
+          export GIT_TERMINAL_PROMPT=0
           git clone --depth=1 https://github.com/Xiaomi-SM8350/android_kernel_xiaomi_sm8350.git android_kernel || git clone --depth=1 https://github.com/LineageOS/android_kernel_xiaomi_sm8350.git android_kernel
           cd android_kernel
           curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
@@ -42,7 +43,7 @@ jobs:
           echo "CONFIG_BPF_SYSCALL=y" >> out/.config
           echo "CONFIG_NET_CLS_ACT=y" >> out/.config
           make O=out olddefconfig
-          make -j$(nproc --all) O=out CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- KCFLAGS="-w" LOCALVERSION="-DARK-kernel"  { tail -n 50 out/build.log  true; exit 1; }
+          make -j$(nproc --all) O=out CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- KCFLAGS="-w" LOCALVERSION="-DARK-kernel" || { echo "BUILD FAILED"; exit 1; }
 
       - name: Package Kernel Flashable Zip
         run: |
