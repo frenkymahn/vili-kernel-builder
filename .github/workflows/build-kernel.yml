@@ -19,7 +19,7 @@ jobs:
         run: |
           mkdir -p $GITHUB_WORKSPACE/android_kernel
           cd $GITHUB_WORKSPACE
-          wget -O kernel.zip https://github.com/Xiaomi-SM8350/android_kernel_xiaomi_sm8350/archive/refs/heads/master.zip
+          wget -O kernel.zip https://github.com/Xiaomi-SM8350/android_kernel_xiaomi_sm8350/archive/refs/heads/lineage-20.zip
           unzip -q kernel.zip
           mv android_kernel_xiaomi_sm8350-*/* android_kernel/
           rm -rf kernel.zip android_kernel_xiaomi_sm8350-*
