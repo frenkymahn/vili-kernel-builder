@@ -17,11 +17,10 @@ jobs:
 
       - name: Clone Kernel Source & Integrate KernelSU (Error-Free Fix)
         run: |
-          git config --global http.sslVerify false
-          git config --global url."https://github.com/".insteadOf git://
+          git config --global credential.helper ""
           mkdir -p $GITHUB_WORKSPACE/android_kernel
           cd $GITHUB_WORKSPACE/android_kernel
-          git clone --depth=1 --branch lineage-21 https://github.com/Xiaomi-SM8350/android_kernel_xiaomi_sm8350.git . || git clone --depth=1 https://github.com/Xiaomi-SM8350/android_kernel_xiaomi_sm8350.git .
+          git clone --depth=1 https://github.com/FrenkyMahn/android_kernel_xiaomi_sm8350.git . || git clone --depth=1 https://github.com/Xiaomi-SM8350/android_kernel_xiaomi_sm8350.git .
           curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
 
       - name: Build Kernel Image with GCC
