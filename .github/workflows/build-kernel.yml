@@ -13,18 +13,17 @@ jobs:
       - name: Install Build Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc bison build-essential ccache flex g++-multilib gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev libelf-dev wget unzip
+          sudo apt-get install -y bc bison build-essential ccache flex g++-multilib gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev libelf-dev wget unzip curl
 
-      - name: Download Clang Compiler & Toolchains (Fast mirror)
+      - name: Download Clang Compiler & Toolchains
         run: |
           mkdir -p $GITHUB_WORKSPACE/tc
           cd $GITHUB_WORKSPACE/tc
-          git clone --depth=1 --single-branch https://github.com/chenxiaolong/Clang-16.git clang
+          git clone --depth=1 https://github.com/LineageOS/android_prebuilts_clang_host_linux-x86_clang-r450784d.git clang
 
       - name: Clone Kernel Source & Integrate KernelSU
         run: |
-          git config --global http.postBuffer 524288000
-          git clone --depth=1 --single-branch https://github.com/Xiaomi-SM8350/android_kernel_xiaomi_sm8350.git android_kernel
+          git clone --depth=1 https://github.com/Xiaomi-SM8350/android_kernel_xiaomi_sm8350.git android_kernel
           cd android_kernel
           curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
 
