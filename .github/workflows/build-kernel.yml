@@ -1,79 +1,79 @@
-name: Build Xiaomi 11T Pro Custom Kernel
+name: Build Custom vili Kernel
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Builder
-        uses: actions/checkout@v4
+    - name: Checkout Builder
+      uses: actions/checkout@v4
 
-      - name: Setup Swap Space and Dependencies
-        run: |
-          sudo swapoff -a
-          sudo fallocate -l 10G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-          free -h
-          sudo apt-get update
-          sudo apt-get install -y bc bison build-essential ccache flex g++-aarch64-linux-gnu gcc-aarch64-linux-gnu g++-arm-linux-gnueabi gcc-arm-linux-gnueabi git gnupg gperf lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev libelf-dev wget curl unzip
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev liblz4-tool libncurses5 libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev python3
 
-      - name: Download Kernel Source and Setup KernelSU
-        run: |
-          mkdir -p $GITHUB_WORKSPACE/android_kernel
-          cd $GITHUB_WORKSPACE
-          export GIT_TERMINAL_PROMPT=0
-          git clone --depth=1 https://github.com/Xiaomi-SM8350/android_kernel_xiaomi_sm8350.git android_kernel || git clone --depth=1 https://github.com/LineageOS/android_kernel_xiaomi_sm8350.git android_kernel
-          cd android_kernel
-          curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+    - name: Download Clang Toolchain
+      run: |
+        mkdir -p clang
+        cd clang
+        curl -LO https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r522817.tar.gz || true
+        tar -xf clang-r522817.tar.gz || true
 
-      - name: Fix Compatibility and Build Kernel
-        run: |
-          cd android_kernel
-          export ARCH=arm64
-          export SUBARCH=arm64
-          export CROSS_COMPILE=aarch64-linux-gnu-
-          export CROSS_COMPILE_COMPAT=arm-linux-gnueabi-
-          
-          # taskstats.c സിന്റാക്സ് പ്രശ്നം ഫിക്സ് ചെയ്യാൻ
-          if [ -f kernel/taskstats.c ]; then
-              sed -i 's/#elif[[:space:]]*$/#else/g' kernel/taskstats.c
-              sed -i 's/#elif !defined/#else/g' kernel/taskstats.c
-          fi
-          
-          make O=out defconfig
-          echo "CONFIG_TMPFS_XATTR=y" >> out/.config
-          echo "CONFIG_BPF=y" >> out/.config
-          echo "CONFIG_BPF_SYSCALL=y" >> out/.config
-          echo "CONFIG_NET_CLS_ACT=y" >> out/.config
-          make O=out olddefconfig
-          
-          # ഡ്രൈവർ ക്രാഷുകളും എററുകളും പൂർണ്ണമായി ബൈപാസ് ചെയ്ത് ബിൽഡ് ചെയ്യാൻ
-          make -j$(nproc --all) O=out CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- KCFLAGS="-w -Wno-error -fno-pie" CONFIG_WERROR=n || make -j1 O=out CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- KCFLAGS="-w -Wno-error" CONFIG_WERROR=n
+    - name: Clone Kernel Source
+      run: |
+        source config.env
+        git clone --depth=1 -b $KERNEL_SOURCE_BRANCH $KERNEL_SOURCE source
 
-      - name: Package Kernel Flashable Zip
-        run: |
-          git clone --depth=1 https://github.com/frenkymahn/vili-kernel-builder.git -b master AnyKernel3
-          cd AnyKernel3
-          sed -i 's/kernel.string=.*/kernel.string=DARK-kernel by FrenkyMahn/g' anykernel.sh || echo "kernel.string=DARK-kernel by FrenkyMahn" >> anykernel.sh
-          cd ${{ github.workspace }}/android_kernel
-          cp out/arch/arm64/boot/Image ${{ github.workspace }}/AnyKernel3/
-          if [ -f out/arch/arm64/boot/dtb ]; then
-              cp out/arch/arm64/boot/dtb ${{ github.workspace }}/AnyKernel3/
-          elif [ -f out/arch/arm64/boot/dts/xiaomi/vili.dtb ]; then
-              cp out/arch/arm64/boot/dts/xiaomi/vili.dtb ${{ github.workspace }}/AnyKernel3/dtb
-          fi
-          if [ -f out/arch/arm64/boot/dtbo.img ]; then
-              cp out/arch/arm64/boot/dtbo.img ${{ github.workspace }}/AnyKernel3/
-          fi
-          cd ${{ github.workspace }}/AnyKernel3
-          zip -r9 ../DARK-kernel-Vili.zip * -x .git* README.md
+    - name: Inject BPF Configs
+      run: |
+        source config.env
+        CONFIG_PATH="source/arch/arm64/configs/$KERNEL_CONFIG"
+        if [ ! -f "$CONFIG_PATH" ]; then
+          CONFIG_PATH="source/kernel/configs/$KERNEL_CONFIG"
+        fi
+        echo "Appending BPF configurations to $CONFIG_PATH"
+        {
+          echo "CONFIG_BPF=y"
+          echo "CONFIG_BPF_SYSCALL=y"
+          echo "CONFIG_NET_CLS_BPF=y"
+          echo "CONFIG_NET_ACT_BPF=y"
+          echo "CONFIG_BPF_JIT=y"
+          echo "CONFIG_HAVE_EBPF_JIT=y"
+          echo "CONFIG_BPF_STREAM_PARSER=y"
+          echo "CONFIG_NET_SCH_INGRESS=y"
+          echo "CONFIG_CGROUP_BPF=y"
+          echo "CONFIG_TMPFS_XATTR=y"
+        } >> "$CONFIG_PATH"
 
-      - name: Upload Flashable Zip Package
-        uses: actions/upload-artifact@v4
-        with:
-          name: DARK-kernel-Vili
-          path: DARK-kernel-Vili.zip
+    - name: Compile Kernel
+      run: |
+        source config.env
+        export PATH=$(pwd)/clang/bin:$PATH
+        cd source
+        make O=out ARCH=arm64 $KERNEL_CONFIG
+        make -j$(nproc --all) O=out ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu-
+
+    - name: Package with AnyKernel3
+      run: |
+        source config.env
+        git clone -b $ANYKERNEL_SOURCE_BRANCH $ANYKERNEL_SOURCE anykernel
+        if [ -f source/out/arch/arm64/boot/Image.gz-dtb ]; then
+          cp source/out/arch/arm64/boot/Image.gz-dtb anykernel/Image.gz-dtb
+        elif [ -f source/out/arch/arm64/boot/Image.gz ]; then
+          cp source/out/arch/arm64/boot/Image.gz anykernel/Image.gz
+        fi
+        if [ -f source/out/arch/arm64/boot/dtbo.img ]; then
+          cp source/out/arch/arm64/boot/dtbo.img anykernel/dtbo.img
+        fi
+        cd anykernel
+        zip -r9 ../vili-custom-kernel.zip * -x .git README.md
+
+    - name: Upload Kernel Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: vili-custom-kernel-zip
+        path: vili-custom-kernel.zip
+        
