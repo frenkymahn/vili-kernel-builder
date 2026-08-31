@@ -10,16 +10,10 @@ jobs:
       - name: Checkout Builder
         uses: actions/checkout@v4
 
-      - name: Install Build Dependencies
+      - name: Install Build Dependencies & GCC Toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc bison build-essential ccache flex g++-multilib gcc-multilib git gnupg gperf lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev libelf-dev wget curl unzip
-
-      - name: Download Clang Compiler & Toolchains
-        run: |
-          mkdir -p $GITHUB_WORKSPACE/tc
-          cd $GITHUB_WORKSPACE/tc
-          git clone --depth=1 https://github.com/LineageOS/android_prebuilts_clang_host_linux-x86_clang-r450784d.git clang
+          sudo apt-get install -y bc bison build-essential ccache flex g++-aarch64-linux-gnu gcc-aarch64-linux-gnu g++-arm-linux-gnueabi gcc-arm-linux-gnueabi git gnupg gperf lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev libelf-dev wget curl unzip
 
       - name: Clone Kernel Source & Integrate KernelSU
         run: |
@@ -29,16 +23,14 @@ jobs:
           cd android_kernel
           curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
 
-      - name: Build Kernel Image
+      - name: Build Kernel Image with GCC
         run: |
           cd android_kernel
           
-          export PATH="$GITHUB_WORKSPACE/tc/clang/bin:$PATH"
           export ARCH=arm64
           export SUBARCH=arm64
           export CROSS_COMPILE=aarch64-linux-gnu-
           export CROSS_COMPILE_COMPAT=arm-linux-gnueabi-
-          export CC=clang
           
           make O=out vili_defconfig
           
@@ -51,7 +43,6 @@ jobs:
           make O=out olddefconfig
           
           make -j$(nproc --all) O=out \
-               CC=clang \
                CROSS_COMPILE=aarch64-linux-gnu- \
                CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
                LOCALVERSION="-DARK-kernel"
