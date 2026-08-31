@@ -3,15 +3,18 @@
 
 ### AnyKernel setup
 # global properties
-properties() { '
-DARK kernel by FrenkyMahn
+properties() {
+kernel.string=DARK-kernel by FrenkyMahn
 do.devicecheck=1
 do.modules=0
 do.systemless=1
 do.cleanup=1
-do.cleanuponabort=1
+do.cleanuponabort=0
 device.name1=vili
-device.name2=Xiaomi 11T Pro
+supported.versions=12-17
+supported.patchlevels=
+}
+
 
 # Block Device Routing
 # For SM8350 (Snapdragon 888), the boot partition is normally allocated here:
@@ -27,10 +30,11 @@ set_perm_recursive 0 0 750 750 $RAMDISK/init* $RAMDISK/sbin;
 } # end attributes
 
 # boot shell variables
-BLOCK=/dev/block/platform/omap/omap_hsmmc.0/by-name/boot;
-IS_SLOT_DEVICE=0;
-RAMDISK_COMPRESSION=auto;
-PATCH_VBMETA_FLAG=auto;
+block=boot;
+is_slot_device=auto;
+ramdisk_compression=auto;
+patch_vbmeta_flag=auto;
+
 
 # import functions/variables and setup patching - see for reference (DO NOT REMOVE)
 . tools/ak3-core.sh;
