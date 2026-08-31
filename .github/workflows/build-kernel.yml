@@ -30,13 +30,20 @@ jobs:
           cd android_kernel
           curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
 
-      - name: Build Kernel Image with GCC
+      - name: Fix Taskstats and Build Kernel
         run: |
           cd android_kernel
           export ARCH=arm64
           export SUBARCH=arm64
           export CROSS_COMPILE=aarch64-linux-gnu-
           export CROSS_COMPILE_COMPAT=arm-linux-gnueabi-
+          
+          # taskstats.c ഫയലിലെ #elif എറർ പൂർണ്ണമായി ഒഴിവാക്കാനുള്ള പാച്ച്
+          if [ -f kernel/taskstats.c ]; then
+              sed -i 's/#elif[[:space:]]*$/#else/g' kernel/taskstats.c
+              sed -i 's/#elif !defined/#else/g' kernel/taskstats.c
+          fi
+          
           make O=out defconfig
           echo "CONFIG_TMPFS_XATTR=y" >> out/.config
           echo "CONFIG_BPF=y" >> out/.config
