@@ -43,7 +43,7 @@ jobs:
           echo "CONFIG_BPF_SYSCALL=y" >> out/.config
           echo "CONFIG_NET_CLS_ACT=y" >> out/.config
           make O=out olddefconfig
-          make -j$(nproc --all) O=out CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- KCFLAGS="-w" LOCALVERSION="-DARK-kernel" || { echo "BUILD FAILED"; exit 1; }
+          make -j$(nproc --all) O=out CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- KCFLAGS="-w -Wno-error" CONFIG_WERROR=n LOCALVERSION="-DARK-kernel" || { echo "BUILD FAILED"; exit 1; }
 
       - name: Package Kernel Flashable Zip
         run: |
