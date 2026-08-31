@@ -36,13 +36,7 @@ jobs:
           export SUBARCH=arm64
           export CROSS_COMPILE=aarch64-linux-gnu-
           export CROSS_COMPILE_COMPAT=arm-linux-gnueabi-
-          if [ -f arch/arm64/configs/vili_defconfig ]; then
-              make O=out vili_defconfig
-          elif [ -f arch/arm64/configs/vendor/vili_defconfig ]; then
-              make O=out vendor/vili_defconfig
-          else
-              make O=out $(ls arch/arm64/configs/ | grep -m 1 'defconfig')
-          fi
+          make O=out defconfig
           echo "CONFIG_TMPFS_XATTR=y" >> out/.config
           echo "CONFIG_BPF=y" >> out/.config
           echo "CONFIG_BPF_SYSCALL=y" >> out/.config
