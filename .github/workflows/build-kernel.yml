@@ -20,7 +20,6 @@ jobs:
           mkdir -p $GITHUB_WORKSPACE/android_kernel
           cd $GITHUB_WORKSPACE
           
-          # Xiaomi 11T Pro (vili) official kernel source repository:
           git clone --depth=1 https://github.com/Xiaomi-SM8350/android_kernel_xiaomi_sm8350.git android_kernel || \
           git clone --depth=1 https://github.com/LineageOS/android_kernel_xiaomi_sm8350.git android_kernel
           
@@ -54,6 +53,7 @@ jobs:
           make -j$(nproc --all) O=out \
                CROSS_COMPILE=aarch64-linux-gnu- \
                CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
+               KCFLAGS="-w" \
                LOCALVERSION="-DARK-kernel"
 
       - name: Clone AnyKernel3 Template
